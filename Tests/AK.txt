@@ -1,0 +1,7 @@
+Velocity:
+1. 71.4 samples (2161.2, 2232.6)
+2. 83.9 samples (6205.8, 6289.7)
+3. 70.7 samples (10024.9, 10095.6)
+
+Rate of fire:
+3931.5 samples, 11.217 per second

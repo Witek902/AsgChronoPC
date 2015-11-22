@@ -105,7 +105,6 @@ public:
             comps.add(new TextPropertyComponent(Value(var("0.0")), "Velocity [ft/s]", 200, false));
             comps.add(new TextPropertyComponent(Value(var("0.0")), "Rate of fire [1/s]", 200, false));
             comps.add(new TextPropertyComponent(Value(var("0.0")), "Bullet energy [J]", 200, false));
-            comps.add(new TextPropertyComponent(Value(var("0.0")), "Bullets power [W]", 200, false));
 
             propertyPanel.addSection("Measured values", comps);
         }

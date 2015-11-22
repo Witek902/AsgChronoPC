@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2015
+Project("{474E5FD7-51CE-1E7C-CAB8-FF854AF9498C}") = "AsgChrono", "AsgChrono.vcxproj", "{235CBFA5-0EAE-334D-B18D-1EBAC0BC5F37}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{235CBFA5-0EAE-334D-B18D-1EBAC0BC5F37}.Debug|Win32.ActiveCfg = Debug|Win32
+		{235CBFA5-0EAE-334D-B18D-1EBAC0BC5F37}.Debug|Win32.Build.0 = Debug|Win32
+		{235CBFA5-0EAE-334D-B18D-1EBAC0BC5F37}.Release|Win32.ActiveCfg = Release|Win32
+		{235CBFA5-0EAE-334D-B18D-1EBAC0BC5F37}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

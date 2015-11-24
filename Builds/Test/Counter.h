@@ -25,52 +25,80 @@ struct AsgReport
 
 class AsgCounter
 {
-    static const size_t BUFFER_SIZE = 4096;
+    enum class State
+    {
+        BeforePeak,
+        FirstPeak,
+        BetweenPeaks,
+        SecondPeak
+    };
+
+    static const size_t BUFFER_SIZE = 8192;
 
     AsgCounterConfig config;
 
-    int peakCounter;
-    int peakStart[2];
-    int peakEnd[2];
+    float averageRMS;
+    State state;
+    int peakSearchStart[2];
 
     std::vector<float> buffer;
     size_t bufferPtr;
 
-    size_t samplePos;
+    size_t samplePos;  // samples passed since Reset()
+    size_t sampleInCurState;  // samples passed since last state change
 
     int reportsNum;
-    float prevReportPeak;
+
+    float firstPeakEstimation;
+    std::vector<float> history;
 
 public:
 
     AsgCounter()
     {
         buffer.resize(BUFFER_SIZE);
+        history.resize(config.minPeakDistance);
+
         Reset();
     }
 
     void Reset()
     {
         bufferPtr = 0;
-        peakCounter = 0;
+        state = State::BeforePeak;
         samplePos = 0;
+        averageRMS = 0.0f;
 
         reportsNum = 0;
-        prevReportPeak = -1.0f;
     }
 
-    void Report(float peakA, float peakB)
+    void ReportPeaksGroup(float peakA, float peakB)
     {
-        printf("#%i distance = %.1f samples", reportsNum, peakB - peakA);
+        printf("#%i:\t A = %.1f,\t B = %.1f", reportsNum, peakA, peakB);
 
-        if (prevReportPeak > 0.0f)
-        {
-            printf(", prev peak = %.1f samples", peakA - prevReportPeak);
-        }
+        if (peakB > 0.0f)
+            printf(",\t dist = %.1f", peakB - peakA);
 
-        prevReportPeak = peakA;
         reportsNum++;
         printf("\n");
+    }
+
+    float FindPeakInHistory()
+    {
+        int result = 0;
+        float tmp = 0.0f;
+        for (int i = 0; i < config.minPeakDistance; ++i)
+        {
+            float val = fabsf(history[i]);
+            if (val > tmp)
+            {
+                tmp = val;
+                result = i;
+            }
+        }
+
+        // TODO: Hermite interpolation?
+        return static_cast<float>(result);
     }
 
     void Analyze()
@@ -80,51 +108,79 @@ public:
         for (size_t i = 0; i < BUFFER_SIZE; ++i)
         {
             float sample = buffer[i];
-            // rms += fabsf(sample);
             rms += sample * sample;
         }
-        // rms = rms / static_cast<float>(BUFFER_SIZE);
         rms = sqrtf(rms / static_cast<float>(BUFFER_SIZE));
 
-        const float sigma = 6.0f;
-        float treshold = sigma * rms;
+        // RMS smoothing
+        if (rms > averageRMS)
+            averageRMS = rms;
+        else
+            averageRMS += 0.5f * (rms - averageRMS);
+
+        rms = averageRMS;
+        const float tresholdOffset = 0.001f;
+        const float sigma = 7.0f;
+        float treshold = sigma * rms + tresholdOffset;
+
+
 
         for (size_t i = 0; i < BUFFER_SIZE; ++i)
         {
-            bool above = (buffer[i] > treshold) || (-buffer[i] > treshold);
+            float sample = buffer[i];
+            bool above = (sample > treshold) || (-sample > treshold);
 
-            if (above && peakCounter == 0) // before any peak
+            if (above && state == State::BeforePeak) // before any peak
             {
-                peakStart[0] = samplePos;
-                peakCounter = 1;
+                peakSearchStart[0] = samplePos;
+                state = State::FirstPeak;
+                sampleInCurState = 0;
+                history[0] = sample;
             }
-            else if (peakCounter == 1)  // first peak
+            else if (state == State::FirstPeak)  // first peak
             {
-                if (samplePos - peakStart[0] > config.minPeakDistance)
+                if (sampleInCurState >= config.minPeakDistance)
                 {
-                    peakCounter = 2;
+                    state = State::BetweenPeaks;
+                    sampleInCurState = 0;
                 }
+                else
+                    history[sampleInCurState] = sample;
             }
-            else if (peakCounter == 2)  // between peaks
+            else if (state == State::BetweenPeaks)  // between peaks
             {
                 if (above)
                 {
-                    peakStart[1] = samplePos;
-                    peakCounter = 3;
+                    peakSearchStart[1] = samplePos;
+                    state = State::SecondPeak;
+                    sampleInCurState = 0;
 
-                    // TODO: peakStart are only beggings of peak search region
-                    Report(peakStart[0], peakStart[1]);
+                    firstPeakEstimation = peakSearchStart[0] + FindPeakInHistory();
+
+                    history[0] = sample;
+                }
+                else if (sampleInCurState >= config.maxPeakDistance)
+                {
+                    // distance between peaks is too large - ignore it
+                    firstPeakEstimation = peakSearchStart[0] + FindPeakInHistory();
+                    ReportPeaksGroup(firstPeakEstimation, -1.0f);
+                    state = State::BeforePeak;
                 }
             }
-            else if (peakCounter == 3)  // second peak
+            else if (state == State::SecondPeak)  // second peak
             {
-                if (samplePos - peakStart[1] > config.maxPeakDistance)
+                if (sampleInCurState >= config.minPeakDistance)
                 {
-                    peakCounter = 0;
+                    float secondPeakEstimation = peakSearchStart[1] + FindPeakInHistory();
+                    ReportPeaksGroup(firstPeakEstimation, secondPeakEstimation);
+                    state = State::BeforePeak;
                 }
+                else
+                    history[sampleInCurState] = sample;
             }
 
             samplePos++;
+            sampleInCurState++;
         }
 
         // printf("RMS = %f, treshold = %f\n", rms, treshold);

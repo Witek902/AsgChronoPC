@@ -5,6 +5,7 @@
 struct AsgCounterConfig
 {
     float sampleRate;       // samples per second
+    float length;           // photocell length in meters
 
     // TODO: these should be in seconds
     int minPeakDistance;  // minimum twin peaks distance (in samples)
@@ -13,6 +14,8 @@ struct AsgCounterConfig
     AsgCounterConfig()
     {
         sampleRate = 44100.0f;
+        length = 0.2f;
+
         minPeakDistance = 30;
         maxPeakDistance = 300;
     }
@@ -77,7 +80,13 @@ public:
         printf("#%i:\t A = %.1f,\t B = %.1f", reportsNum, peakA, peakB);
 
         if (peakB > 0.0f)
-            printf(",\t dist = %.1f", peakB - peakA);
+        {
+            float sampleDist = peakB - peakA;
+            printf(",\t d = %.1f", sampleDist);
+
+            float fps = 3.2808f * config.length * config.sampleRate / sampleDist;
+            printf(",\t FPS = %.1f", fps);
+        }
 
         reportsNum++;
         printf("\n");

@@ -85,6 +85,64 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioSetupComponent)
 };
 
+
+
+class SetupComponent
+    : public Component
+{
+public:
+    SetupComponent()
+        : bbMass(0.2)
+        , detectorLength(20.0)
+        , minVelocity(100.0)
+        , maxVelocity(600.0)
+        , detectionTreshold(8.0)
+        , fireRateTreshold(1.5)
+    {
+        {
+            /*
+            TODO: general settings (language, units)
+             */
+
+            {
+                Array<PropertyComponent*> comps;
+                comps.add(new SliderPropertyComponent(Value(var(bbMass)), "BB mass [g]", 0.0, 10.0, 0.0));
+                comps.add(new SliderPropertyComponent(Value(var(detectorLength)), "Detector length [cm]", 0.0, 10.0, 0.0));
+                propertyPanel.addSection("Measurement variables", comps);
+            }
+
+            {
+                Array<PropertyComponent*> comps;
+                comps.add(new SliderPropertyComponent(Value(var(minVelocity)), "Min. velocity [ft/s]", 50.0, 1000.0, 1.0));
+                comps.add(new SliderPropertyComponent(Value(var(maxVelocity)), "Max. velocity [ft/s]", 50.0, 1000.0, 1.0));
+                comps.add(new SliderPropertyComponent(Value(var(detectionTreshold)), "Peak detection treshold", 1.0, 20.0, 0.0));
+                comps.add(new SliderPropertyComponent(Value(var(detectionTreshold)), "Fire rate treshold", 1.0, 10.0, 0.0));
+                propertyPanel.addSection("Detection options", comps);
+            }
+        }
+
+        addAndMakeVisible(propertyPanel);
+    }
+
+    void resized() override
+    {
+        Rectangle<int> area(getLocalBounds());
+        propertyPanel.setBounds(area);
+    }
+
+private:
+    double bbMass;
+    double detectorLength;
+
+    double minVelocity;
+    double maxVelocity;
+    double detectionTreshold;
+    double fireRateTreshold;
+
+    PropertyPanel propertyPanel;
+};
+
+
 class MeasureComponent
     : public Component
     , public ButtonListener
@@ -93,32 +151,10 @@ public:
     static const int TITLE_FONT_SIZE = 16;
 
     MeasureComponent()
-        : bbMass(0.2)
-        , minVelocity(100.0)
-        , maxVelocity(600.0)
     {
         addAndMakeVisible(clearButton = new TextButton("Clear", "Begin a new measurement"));
         clearButton->addListener(this);
 
-        {
-            Array<PropertyComponent*> comps;
-            comps.add(new TextPropertyComponent(Value(var("0.0")), "Velocity [ft/s]", 200, false));
-            comps.add(new TextPropertyComponent(Value(var("0.0")), "Rate of fire [1/s]", 200, false));
-            comps.add(new TextPropertyComponent(Value(var("0.0")), "Bullet energy [J]", 200, false));
-
-            propertyPanel.addSection("Measured values", comps);
-        }
-
-        {
-            Array<PropertyComponent*> comps;
-            comps.add(new SliderPropertyComponent(Value(var(bbMass)), "BB mass [g]", 0.0, 10.0, 0.0));
-            comps.add(new SliderPropertyComponent(Value(var(minVelocity)), "Min. velocity", 50.0, 1000.0, 1.0));
-            comps.add(new SliderPropertyComponent(Value(var(maxVelocity)), "Max. velocity", 50.0, 1000.0, 1.0));
-
-            propertyPanel.addSection("Options", comps);
-        }
-
-        addAndMakeVisible(propertyPanel);
     }
 
     void buttonClicked(Button* button) override
@@ -129,17 +165,18 @@ public:
     {
         Rectangle<int> area(getLocalBounds());
         clearButton->setBounds(area.removeFromTop(40));
-        propertyPanel.setBounds(area);
     }
 
 private:
-    double bbMass;
-    double minVelocity;
-    double maxVelocity;
+    /*
 
+    TODO:
+    * Velocity: min, max, average, standrad deviation (ft/s, m/s)
+    * Fire rate: min, max, average, standrad deviation (rounds/s, rounds/min)
+    * Energy, power
+    */
 
     ScopedPointer<Button> clearButton;
-    PropertyPanel propertyPanel;
 };
 
 
@@ -152,7 +189,8 @@ public:
         : TabbedComponent(TabbedButtonBar::TabsAtTop)
     {
         addTab("Measure", Colours::whitesmoke, new MeasureComponent(), true);
-        addTab("Audio setup", Colours::whitesmoke, new AudioSetupComponent(), true);
+        addTab("Setup", Colours::whitesmoke, new SetupComponent(), true);
+        addTab("Input setup", Colours::whitesmoke, new AudioSetupComponent(), true);
 
         setSize(600, 600);
     }

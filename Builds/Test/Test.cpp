@@ -38,6 +38,7 @@ int main()
     Test("AK");
     Test("G36");
     Test("G36_rev");
+    Test("digl");
 
     QueryPerformanceCounter(&stop);
     printf("Time = %.3f ms\n", (float)(stop.QuadPart - start.QuadPart) / (float)freq.QuadPart);

@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Counter.h"
+#include "../AsgChronoLib/Counter.h"
 
 #include "Windows.h"
 
@@ -24,6 +24,10 @@ void Test(const char* name)
         counter.ProcessBuffer(buffer, read);
     }
 
+    AsgStats& stats = counter.GetStats();
+
+    stats.Calc();
+    stats.Print();
     printf("\n");
 }
 
@@ -34,11 +38,11 @@ int main()
 
     QueryPerformanceCounter(&start);
 
-    Test("TestSample");
-    Test("AK");
+    //Test("TestSample");
+    //Test("AK");
     Test("G36");
-    Test("G36_rev");
-    Test("digl");
+    //Test("G36_rev");
+    //Test("digl");
 
     QueryPerformanceCounter(&stop);
     printf("Time = %.3f ms\n", (float)(stop.QuadPart - start.QuadPart) / (float)freq.QuadPart);

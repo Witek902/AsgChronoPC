@@ -3,8 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AsgChrono", "AsgChrono.vcxproj", "{235CBFA5-0EAE-334D-B18D-1EBAC0BC5F37}"
+	ProjectSection(ProjectDependencies) = postProject
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9} = {ED9F07C5-4393-4183-A4AB-ECC349B356E9}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "..\Test\Test.vcxproj", "{9FECA3B2-DF04-4A10-85F7-22E0A3A62627}"
+	ProjectSection(ProjectDependencies) = postProject
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9} = {ED9F07C5-4393-4183-A4AB-ECC349B356E9}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AsgChronoLib", "..\AsgChronoLib\AsgChronoLib.vcxproj", "{ED9F07C5-4393-4183-A4AB-ECC349B356E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +36,14 @@ Global
 		{9FECA3B2-DF04-4A10-85F7-22E0A3A62627}.Release|Win32.Build.0 = Release|Win32
 		{9FECA3B2-DF04-4A10-85F7-22E0A3A62627}.Release|x64.ActiveCfg = Release|x64
 		{9FECA3B2-DF04-4A10-85F7-22E0A3A62627}.Release|x64.Build.0 = Release|x64
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9}.Debug|Win32.Build.0 = Debug|Win32
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9}.Debug|x64.ActiveCfg = Debug|x64
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9}.Debug|x64.Build.0 = Debug|x64
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9}.Release|Win32.ActiveCfg = Release|Win32
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9}.Release|Win32.Build.0 = Release|Win32
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9}.Release|x64.ActiveCfg = Release|x64
+		{ED9F07C5-4393-4183-A4AB-ECC349B356E9}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

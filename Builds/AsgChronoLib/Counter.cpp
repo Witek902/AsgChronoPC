@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "Counter.h"
 
+// for Hermite interpolation
+const size_t HISTORY_SAMPLES_BEFORE = 2;
+
 AsgCounterConfig::AsgCounterConfig()
 {
     sampleRate = 44100.0f;
@@ -141,7 +144,7 @@ void AsgStats::AddSample(float velocity, float deltaTime)
 AsgCounter::AsgCounter()
 {
     buffer.resize(BUFFER_SIZE);
-    history.resize(config.minPeakDistance);
+    history.resize(config.minPeakDistance + HISTORY_SAMPLES_BEFORE);
     Reset();
 }
 
@@ -171,16 +174,23 @@ AsgCounterConfig& AsgCounter::GetConfig()
 
 void AsgCounter::ReportPeaksGroup(float peakA, float peakB)
 {
-    // printf("#%i:\t A = %.1f,\t B = %.1f", reportsNum, peakA, peakB);
+#ifdef _DEBUG
+    printf("#%i:\t A = %.2f,\t B = %.2f", reportsNum, peakA, peakB);
+#endif
 
     float velocity = -1.0f;
     if (peakB > 0.0f)
     {
         float sampleDist = peakB - peakA;
         velocity = config.length * config.sampleRate / sampleDist;
-
-        // printf(",\t d = %.1f,\t FPS = %.1f", sampleDist, velocity);
+#ifdef _DEBUG
+        printf(",\t d = %.2f,\t m/s = %.1f", sampleDist, velocity);
+#endif
     }
+
+#ifdef _DEBUG
+    printf("\n");
+#endif
 
     float dt = -1.0f;
     if (prevPeakA > 0)
@@ -189,7 +199,6 @@ void AsgCounter::ReportPeaksGroup(float peakA, float peakB)
 
     prevPeakA = peakA;
     reportsNum++;
-    //printf("\n");
 
     if (callback)
         callback();
@@ -197,20 +206,87 @@ void AsgCounter::ReportPeaksGroup(float peakA, float peakB)
 
 float AsgCounter::FindPeakInHistory()
 {
-    int result = 0;
-    float tmp = 0.0f;
-    for (int i = 0; i < config.minPeakDistance; ++i)
+    int maxID = 0;
+    float tmp = -1.0f;
+    for (int i = 0; i < config.minPeakDistance + HISTORY_SAMPLES_BEFORE; ++i)
     {
         float val = fabsf(history[i]);
         if (val > tmp)
         {
             tmp = val;
-            result = i;
+            maxID = i;
         }
     }
 
-    // TODO: Hermite interpolation?
-    return static_cast<float>(result);
+    if (maxID < HISTORY_SAMPLES_BEFORE || maxID >= config.minPeakDistance)
+        return static_cast<float>(maxID - (int)HISTORY_SAMPLES_BEFORE);
+
+    // Hermite interpolation
+
+    int offset;
+    if (fabsf(history[maxID - 1]) < fabsf(history[maxID + 1]))
+        offset = -1;
+    else
+        offset = -2;
+
+    float y0 = history[maxID + offset];
+    float y1 = history[maxID + offset + 1];
+    float y2 = history[maxID + offset + 2];
+    float y3 = history[maxID + offset + 3];
+
+    float c0 = y1;
+    float c1 = 0.5f * (y2 - y0);
+    float c2 = y0 - 2.5f * y1 + 2.0f * y2 - 0.5f * y3;
+    float c3 = 1.5f * (y1 - y2) + 0.5f * (y3 - y0);
+
+    float dc0 = c1;
+    float dc1 = 2.0f * c2;
+    float dc2 = 3.0f * c3;
+
+    float delta = dc1 * dc1 - 4.0f * dc0 * dc2;
+
+    float x = 0.5f;
+    float y = 0.0f;
+    if (delta >= 0.0f)
+    {
+        float x0 = (-dc1 - sqrtf(delta)) / (2.0f * dc2);
+        float x1 = (-dc1 + sqrtf(delta)) / (2.0f * dc2);
+
+        float iy0 = ((c3 * x0 + c2) * x0 + c1) * x0 + c0;
+        float iy1 = ((c3 * x1 + c2) * x1 + c1) * x1 + c0;
+
+
+        if ((x0 < 0.0f || x0 > 1.0f) && (x1 < 0.0f || x1 > 1.0f))
+        {
+            // both maxima are beyond (0, 1) range
+            x = 0.5f;
+            y = 0.0f;
+        }
+        else if (x0 < 0.0f || x0 > 1.0f)
+        {
+            x = x1;
+            y = iy1;
+        }
+        else if (x1 < 0.0f || x1 > 1.0f)
+        {
+            x = x0;
+            y = iy0;
+        }
+        else if (fabsf(iy0) > fabsf(iy1))
+        {
+            x = x0;
+            y = iy0;
+        }
+        else
+        {
+            x = x1;
+            y = iy1;
+        }
+    }
+
+    // printf("  y0 = %6.3f, y1 = %6.3f, y2 = %6.3f, y3 = %6.3f  =>  y(%.2f) = %.2f\n", y0, y1, y2, y3, x, y);
+
+    return static_cast<float>(maxID + offset) + x;
 }
 
 void AsgCounter::Analyze()
@@ -233,6 +309,8 @@ void AsgCounter::Analyze()
     if (warmup)
     {
         warmup = false;
+        samplePos += BUFFER_SIZE;
+        sampleInCurState += BUFFER_SIZE;
         return;
     }
 
@@ -251,7 +329,13 @@ void AsgCounter::Analyze()
             peakSearchStart[0] = samplePos;
             state = State::FirstPeak;
             sampleInCurState = 0;
-            history[0] = sample;
+
+            for (size_t j = 0; j < HISTORY_SAMPLES_BEFORE; ++j)
+            {
+                int id = (int)(i + j) - (int)HISTORY_SAMPLES_BEFORE;
+                history[j] = (id >= 0) ? buffer[id] : 0.0f;  // TODO
+            }
+            history[HISTORY_SAMPLES_BEFORE] = sample;
         }
         else if (state == State::FirstPeak)  // first peak
         {
@@ -261,7 +345,7 @@ void AsgCounter::Analyze()
                 sampleInCurState = 0;
             }
             else
-                history[sampleInCurState] = sample;
+                history[sampleInCurState + HISTORY_SAMPLES_BEFORE] = sample;
         }
         else if (state == State::BetweenPeaks)  // between peaks
         {
@@ -273,7 +357,13 @@ void AsgCounter::Analyze()
 
                 firstPeakEstimation = peakSearchStart[0] + FindPeakInHistory();
 
-                history[0] = sample;
+                // TODO
+                for (size_t j = 0; j < HISTORY_SAMPLES_BEFORE; ++j)
+                {
+                    int id = (int)(i + j) - (int)HISTORY_SAMPLES_BEFORE;
+                    history[j] = (id >= 0) ? buffer[id] : 0.0f;  // TODO
+                }
+                history[HISTORY_SAMPLES_BEFORE] = sample;
             }
             else if (sampleInCurState >= config.maxPeakDistance)
             {
@@ -292,7 +382,7 @@ void AsgCounter::Analyze()
                 state = State::BeforePeak;
             }
             else
-                history[sampleInCurState] = sample;
+                history[sampleInCurState + HISTORY_SAMPLES_BEFORE] = sample;
         }
 
         samplePos++;

@@ -182,7 +182,7 @@ public:
 
         addAndMakeVisible(rofTitleLabel);
         addAndMakeVisible(rofLabel);
-        rofTitleLabel.setText("Rate of fire [BB/m]", dontSendNotification);
+        rofTitleLabel.setText("Rate of fire [BB/min]", dontSendNotification);
         rofLabel.setFont(font);
 
         Reset();

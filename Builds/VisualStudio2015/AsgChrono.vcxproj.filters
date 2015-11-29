@@ -1497,6 +1497,15 @@
     <ClCompile Include="..\..\..\SDK\Juce2\modules\juce_video\juce_video.cpp">
       <Filter>Juce Library Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\MeasureComponent.cpp">
+      <Filter>AsgChrono\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\SetupComponent.cpp">
+      <Filter>AsgChrono\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\AudioSetupComponent.cpp">
+      <Filter>AsgChrono\Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\SDK\Juce2\modules\juce_audio_basics\buffers\juce_AudioDataConverters.h">
@@ -2893,6 +2902,18 @@
     </ClInclude>
     <ClInclude Include="..\..\JuceLibraryCode\JuceHeader.h">
       <Filter>Juce Library Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\SetupComponent.h">
+      <Filter>AsgChrono\Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\AudioSetupComponent.h">
+      <Filter>AsgChrono\Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\MeasureComponent.h">
+      <Filter>AsgChrono\Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Common.h">
+      <Filter>AsgChrono\Source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -26,7 +26,7 @@ void Test(const char* name)
 
     AsgStats& stats = counter.GetStats();
 
-    stats.Calc();
+    stats.Calc(counter.GetConfig());
     stats.Print();
     printf("\n");
 }

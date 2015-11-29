@@ -11,6 +11,10 @@ AsgCounterConfig::AsgCounterConfig()
 
     minPeakDistance = 30;
     maxPeakDistance = 300;
+
+    mass = 0.0002f;
+    fireRateTreshold = 1.25f;
+    detectionSigma = 7.0f;
 }
 
 
@@ -37,7 +41,7 @@ void AsgStats::Print() const
            fireRateAvg, fireRateMin, fireRateMax, fireRateStdDev);
 }
 
-void AsgStats::Calc()
+void AsgStats::Calc(const AsgCounterConfig& cfg)
 {
     velocityMin = FLT_MAX;
     velocityMax = FLT_MIN;
@@ -79,9 +83,6 @@ void AsgStats::Calc()
         velocityStdDev = sqrtf(stdDevSum / (float)validVelocitySamples);
     }
 
-    // TODO: move to config
-    const float FIRE_RATE_TRESHOLD = 1.25f;
-
     // calculate fire rate stats
     if (history.size() > 2)
     {
@@ -95,13 +96,13 @@ void AsgStats::Calc()
         {
             float dt = history[i].deltaTime;
 
-            if (dt > lastDeltaTime * FIRE_RATE_TRESHOLD)
+            if (dt > lastDeltaTime * cfg.fireRateTreshold)
             {
                 break;
             }
 
             // we are in semi-auto mode - do not calculate RoF
-            if (dt * FIRE_RATE_TRESHOLD < lastDeltaTime)
+            if (dt * cfg.fireRateTreshold < lastDeltaTime)
             {
                 samples = 0;
                 break;
@@ -144,7 +145,6 @@ void AsgStats::AddSample(float velocity, float deltaTime)
 AsgCounter::AsgCounter()
 {
     buffer.resize(BUFFER_SIZE);
-    history.resize(config.minPeakDistance + HISTORY_SAMPLES_BEFORE);
     Reset();
 }
 
@@ -158,6 +158,8 @@ void AsgCounter::Reset()
 
     reportsNum = 0;
     prevPeakA = -1.0f;
+
+    history.resize(config.minPeakDistance + HISTORY_SAMPLES_BEFORE);
 
     stats.Reset();
 }
@@ -316,8 +318,7 @@ void AsgCounter::Analyze()
 
     rms = averageRMS;
     const float tresholdOffset = 0.001f;
-    const float sigma = 7.0f;
-    float treshold = sigma * rms + tresholdOffset;
+    float treshold = config.detectionSigma * rms + tresholdOffset;
 
     for (size_t i = 0; i < BUFFER_SIZE; ++i)
     {

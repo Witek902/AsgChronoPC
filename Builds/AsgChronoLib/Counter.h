@@ -12,6 +12,11 @@ struct AsgCounterConfig
     float sampleRate;       // samples per second
     float length;           // photocell length in meters
 
+    float mass;             // BB mass in kg
+
+    float detectionSigma;
+    float fireRateTreshold;
+
     AsgCounterConfig();
 };
 
@@ -34,7 +39,7 @@ struct AsgStats
     AsgStats();
     void Reset();
     void AddSample(float velocity, float deltaTime);
-    void Calc();
+    void Calc(const AsgCounterConfig& cfg);
     void Print() const;
 };
 
